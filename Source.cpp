@@ -38,14 +38,18 @@ sf::Font font;
 sf::Event event;
 sf::Image icon;
 bool locked = false;
+int offset = 0;
+bool drawer = false;
 
 vector<sf::Color> colors;
 
 int main()
 {
+
 	HWND hWnd = GetConsoleWindow();
 	if (hWnd)
 		ShowWindow(hWnd, SW_HIDE);
+
 #pragma region ==VARIABLES==
 
 	//add colors to vector
@@ -115,11 +119,12 @@ int main()
 	deTitle.setFillColor(sf::Color::White);
 	deTitle.setPosition(50, 355);
 
-	Button exit(sf::Vector2f(width - 20, 20), sf::Vector2f(25, 25), sf::Color(0,0,0), sf::Color::White, "x", 24, true, false);
-	Button greeter(sf::Vector2f(400,75),sf::Vector2f(100,30), sf::Color(0,0,0),sf::Color::Red,"OFFLINE",12,true, true);
-	Button mod(sf::Vector2f(400, 175), sf::Vector2f(100, 30), sf::Color(0, 0, 0), sf::Color::Red, "OFFLINE", 12, true, true);
-	Button dm(sf::Vector2f(400, 275), sf::Vector2f(100, 30), sf::Color(0, 0, 0), sf::Color::Red, "OFFLINE", 12, true, true);
-	Button de(sf::Vector2f(400, 375), sf::Vector2f(100, 30), sf::Color(0, 0, 0), sf::Color::Red, "OFFLINE", 12, true, true);
+	Button exit(sf::Vector2f(width - 20, 20), sf::Vector2f(25, 25), sf::Color(0,0,0), sf::Color::White, "x", 24, true, false, false);
+	Button greeter(sf::Vector2f(400,75),sf::Vector2f(100,30), sf::Color(0,0,0),sf::Color::Red,"OFFLINE",12,true, true, false);
+	Button mod(sf::Vector2f(400, 175), sf::Vector2f(100, 30), sf::Color(0, 0, 0), sf::Color::Red, "OFFLINE", 12, true, true, false);
+	Button dm(sf::Vector2f(400, 275), sf::Vector2f(100, 30), sf::Color(0, 0, 0), sf::Color::Red, "OFFLINE", 12, true, true, false);
+	Button de(sf::Vector2f(400, 375), sf::Vector2f(100, 30), sf::Color(0, 0, 0), sf::Color::Red, "OFFLINE", 12, true, true, false);
+	Button titleName(sf::Vector2f(45,height-23),sf::Vector2f(80,30),sf::Color::Black,sf::Color::White,"VISOR",24,true,false, true);
 
 	sf::RectangleShape titlebar1(sf::Vector2f(width - 60, 2));
 	sf::RectangleShape titlebar2(sf::Vector2f(width - 65, 2));
@@ -210,6 +215,10 @@ int main()
 	bp::child bot3process;
 	bp::child bot4process;
 
+	sf::RectangleShape drawerBacker(sf::Vector2f(width,height));
+	drawerBacker.setFillColor(sf::Color(0,0,0));
+	drawerBacker.setPosition(sf::Vector2f(0, height - 50+offset));
+
 
 
 #pragma endregion
@@ -231,7 +240,25 @@ int main()
 		backer2.setOutlineColor(color);
 		backer3.setOutlineColor(color);
 		exit.text_color = color;
+		titleName.text_color = color;
 		lockedSprite.setColor(color);
+
+		titlebar1.setPosition(93, height - 27 + offset);
+		titlebar2.setPosition(90, height - 22 + offset);
+		titlebarTop.setPosition(0, height - 50 + offset);
+		titleName.set_position(sf::Vector2f(45, height - 23 + offset));
+		drawerBacker.setPosition(sf::Vector2f(0, height - 50 + offset));
+
+		if (drawer)
+		{
+			if (offset > -450)
+				offset -= 25;
+		}
+		else
+		{
+			if (offset < 0)
+				offset += 25;
+		}
 
 		if (locked)
 		{
@@ -254,22 +281,40 @@ int main()
 		if (ticker > 0)
 			ticker--;
 
-		if (exit.clicked && !locked)
+		if (exit.clicked && !locked && window.hasFocus())
 		{
+			//close all child processes if they are running
+			if (bot1Online)
+			{
+				TerminateProcess(bot1process.native_handle(), 0);
+				bot1process.wait();
+			}
+			if (bot2Online)
+			{
+				TerminateProcess(bot2process.native_handle(), 0);
+				bot2process.wait();
+			}
+			if (bot3Online)
+			{
+				TerminateProcess(bot3process.native_handle(), 0);
+				bot3process.wait();
+			}
+			if (bot4Online)
+			{
+				TerminateProcess(bot4process.native_handle(), 0);
+				bot4process.wait();
+			}
 			window.close();
 		}
 
-		if (greeter.clicked && ticker == 0 && !locked)
+		if (greeter.clicked && ticker == 0 && !locked && window.hasFocus())
 		{
 			ticker = 20;
 			if (bot1Online)
 			{
-				bot1process.terminate();
+				TerminateProcess(bot1process.native_handle(), 0);
 				bot1process.wait();
-				bot1Online = false;
-				outputText1.setString("");
-				greeter.text_string = "OFFLINE";
-				greeter.text_color = sf::Color::Red;
+				
 			}
 			else
 			{
@@ -307,18 +352,15 @@ int main()
 			}
 		}
 
-		if (mod.clicked && ticker == 0 && !locked)
+		if (mod.clicked && ticker == 0 && !locked && window.hasFocus())
 		{
 			
 			ticker = 20;
 			if (bot2Online)
 			{
-				bot2process.terminate();
+				TerminateProcess(bot2process.native_handle(), 0);
 				bot2process.wait();
-				bot2Online = false;
-				mod.text_string = "OFFLINE";
-				mod.text_color = sf::Color::Red;
-				outputText2.setString("");
+				
 			}
 			else
 			{
@@ -340,17 +382,14 @@ int main()
 			}
 		}
 
-		if (dm.clicked && ticker == 0 && !locked)
+		if (dm.clicked && ticker == 0 && !locked && window.hasFocus())
 		{
 			ticker = 20;
 			if (bot3Online)
 			{
-				bot3process.terminate();
+				TerminateProcess(bot3process.native_handle(), 0);
 				bot3process.wait();
-				bot3Online = false;
-				dm.text_string = "OFFLINE";
-				dm.text_color = sf::Color::Red;
-				outputText3.setString("");
+				
 			}
 			else
 			{
@@ -372,17 +411,14 @@ int main()
 			}
 		}
 
-		if (de.clicked && ticker == 0 && !locked)
+		if (de.clicked && ticker == 0 && !locked && window.hasFocus())
 		{
 			ticker = 20;
 			if (bot4Online)
 			{
-				bot4process.terminate();
+				TerminateProcess(bot4process.native_handle(), 0);
 				bot4process.wait();
-				bot4Online = false;
-				de.text_string = "OFFLINE";
-				de.text_color = sf::Color::Red;
-				outputText4.setString("");
+				
 			}
 			else
 			{
@@ -402,11 +438,15 @@ int main()
 					{
 						std::cerr << "Error starting the process: " << e.what() << std::endl;
 					}
-					});
+				});
 			}
 		}
 
-
+		if (titleName.clicked && ticker == 0 && window.hasFocus())
+		{
+			ticker = 20;
+			drawer = !drawer;
+		}
 
 		while (window.pollEvent(event))
 		{
@@ -423,6 +463,10 @@ int main()
 						if (mousePos.x > window.getSize().x - 70)
 						{
 							
+						}
+						else if (mousePos.x < 100)
+						{
+
 						}
 						else
 						{
@@ -464,35 +508,84 @@ int main()
 					color = colors[colorTicker];
 				}
 
-				//up and down arrows change colorBticker
 				if (event.key.code == sf::Keyboard::Up && !locked)
 				{
-					colorBTicker++;
-					if (colorBTicker > colors.size() - 1)
-						colorBTicker = 0;
-					colorB = colors[colorBTicker];
+					//offset--;
 				}
 				if (event.key.code == sf::Keyboard::Down && !locked)
 				{
-					colorBTicker--;
-					if (colorBTicker < 0)
-						colorBTicker = colors.size() - 1;
-					colorB = colors[colorBTicker];
+					//offset++;
 				}
 			}
 		}
 
-		if (windowheld && !locked)
+		if (windowheld && !locked && !drawer)
 			window.setPosition(sf::Mouse::getPosition() - sf::Vector2i(window.getSize().x / 2, 25));
 
-		//clear the window
+		if (bot1process.running())
+		{
+			bot1Online = true;
+			greeter.text_string = "ONLINE";
+			greeter.text_color = sf::Color::Green;
+		}
+		else
+		{
+			bot1Online = false;
+			greeter.text_string = "OFFLINE";
+			greeter.text_color = sf::Color::Red;
+			outputText1.setString("");
+		}
+
+		
+		if (bot2process.running())
+		{
+			bot2Online = true;
+			mod.text_string = "ONLINE";
+			mod.text_color = sf::Color::Green;
+		}
+		else
+		{
+			bot2Online = false;
+			mod.text_string = "OFFLINE";
+			mod.text_color = sf::Color::Red;
+			outputText2.setString("");
+		}
+		
+
+		
+		if (bot3process.running())
+		{
+			bot3Online = true;
+			dm.text_string = "ONLINE";
+			dm.text_color = sf::Color::Green;
+		}
+		else
+		{
+			bot3Online = false;
+			dm.text_string = "OFFLINE";
+			dm.text_color = sf::Color::Red;
+			outputText3.setString("");
+		}
+		
+		if (bot4process.running())
+		{
+			bot4Online = true;
+			de.text_string = "ONLINE";
+			de.text_color = sf::Color::Green;
+		}
+		else
+		{
+			bot4Online = false;
+			de.text_string = "OFFLINE";
+			de.text_color = sf::Color::Red;
+			outputText4.setString("");
+		}
+		
+
+
 		window.clear(colorB);
 
 		
-		window.draw(borderTop);
-		window.draw(borderBottom);
-		window.draw(borderLeft);
-		window.draw(borderRight);
 		window.draw(backer0);
 		window.draw(backer1);
 		window.draw(backer2);
@@ -516,15 +609,25 @@ int main()
 		exit.draw(window);
 		window.draw(lockedSprite);
 
-		window.draw(title);
-		window.draw(titlebar1);
-		window.draw(titlebar2);
-		window.draw(titlebarTop);
-
 		window.draw(outputText1);
 		window.draw(outputText2);
 		window.draw(outputText3);
 		window.draw(outputText4);
+
+		//window.draw(title);
+		window.draw(drawerBacker);
+		titleName.draw(window);
+		titleName.update(window);
+		window.draw(titlebar1);
+		window.draw(titlebar2);
+		window.draw(titlebarTop);
+
+		window.draw(borderTop);
+		window.draw(borderBottom);
+		window.draw(borderLeft);
+		window.draw(borderRight);
+
+		
 
 		window.setFramerateLimit(60);
 		window.display();

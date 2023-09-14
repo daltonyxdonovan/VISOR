@@ -28,8 +28,9 @@ public:
 	int font_size;
 	bool interactable;
 	bool outlined;
+	bool italic;
 
-	Button(sf::Vector2f position, sf::Vector2f size, sf::Color color, sf::Color text_color, string text_string, int font_size, bool interactable, bool outlined)
+	Button(sf::Vector2f position, sf::Vector2f size, sf::Color color, sf::Color text_color, string text_string, int font_size, bool interactable, bool outlined, bool italic)
 	{
 		this->position = position;
 		this->size = size;
@@ -40,6 +41,7 @@ public:
 		this->font_size = font_size;
 		this->interactable = interactable;
 		this->outlined = outlined;
+		this->italic = italic;
 		
 		shape.setSize(size);
 		shape.setOrigin(size.x / 2, size.y / 2);
@@ -62,6 +64,8 @@ public:
 			shape.setOutlineThickness(2);
 		else
 			shape.setOutlineThickness(0);
+		
+
 		hover_color = sf::Color(color.r + 50 > 255 ? 255 : color.r + 50, color.g + 50 > 255 ? 255 : color.g + 50, color.b + 50 > 255 ? 255 : color.b + 50);
 		clicked_color = sf::Color(color.r + 100 > 255 ? 255 : color.r + 100, color.g + 100 > 255 ? 255 : color.g + 100, color.b + 100 > 255 ? 255 : color.b + 100);
 		text_hover_color = sf::Color(text_color.r + 50 > 255 ? 255 : text_color.r + 50, text_color.g + 50 > 255 ? 255 : text_color.g + 50, text_color.b + 50 > 255 ? 255 : text_color.b + 50);
@@ -121,6 +125,8 @@ public:
 		text.setOrigin(localBounds);
 		text.setPosition(position);
 		text.setStyle(sf::Text::Bold);
+		if (italic)
+			text.setStyle(sf::Text::Italic);
 		if (clicked)
 		{
 			text.setFillColor(text_clicked_color);
