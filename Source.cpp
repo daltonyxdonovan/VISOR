@@ -1,3 +1,4 @@
+#pragma region ==INCLUDES==
 #pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
 
 #include <SFML/Graphics.hpp>
@@ -9,48 +10,102 @@
 #include <iostream>
 #include <boost/process.hpp>
 #include <boost/thread.hpp>
-
 namespace bp = boost::process;
-
-//in the standard namespace
 using namespace std;
+#pragma endregion
 
-//variables
-const int width{ 500 };
-const int height{ 500 };
+// vvv NAME OF THE BOT TO DISPLAY ON THE VISOR vvv
 const string botName1{ "GR33T-R" };
 const string botName2{ "MODERATOR" };
 const string botName3{ "DUNGEONMASTER" };
 const string botName4{ "DUNGEONEER" };
+
+// vvv LOCATION OF THE BOT SCRIPT TO RUN, WITHOUT THE SCRIPT ITSELF (the parent folder) vvv
+const string bot1Path{ "C:/Users/dalto/Desktop/discord_bot" };
+const string bot2Path{ "F:/code/bot" };
+const string bot3Path{ "F:/code/bot/Gatekeeper" };
+const string bot4Path{ "F:/code/bot" };
+
+// vvv COMMAND TO RUN THE BOT SCRIPT vvv
+const string bot1Command{ "node app.js" };
+const string bot2Command{ "python moderator.py" };
+const string bot3Command{ "python gatekeeper.py" };
+const string bot4Command{ "python danny.py" };
+
+#pragma region ==VARIABLES==
+const int width{ 500 };
+const int height{ 500 };
+
 bool bot1Online = false;
 bool bot2Online = false;
 bool bot3Online = false;
 bool bot4Online = false;
-sf::Color color;
-sf::Color colorB;
+bool windowheld = false;
+bool isDragging = false;
+bool locked = false;
+bool drawer = false;
+
 int colorTicker = 0;
 int colorBTicker = 10;
 int ticker = 0;
+int offset = 0; 
+
+vector<sf::Color> colors;
+sf::Color color;
+sf::Color colorB;
 sf::Vector2i dragStartPosition;
-bool windowheld = false;
-bool isDragging = false;
 sf::Font font;
 sf::Event event;
 sf::Image icon;
-bool locked = false;
-int offset = 0;
-bool drawer = false;
+sf::Sprite lockedSprite;
+sf::Texture lockedIMG;
+sf::Texture unlockedIMG;
 
-vector<sf::Color> colors;
+sf::Text greeterTitle; //bot1
+sf::Text modTitle; //bot2
+sf::Text dmTitle; //bot3
+sf::Text deTitle; //bot4
+sf::Text title;
+sf::Text outputText1;
+sf::Text outputText2;
+sf::Text outputText3;
+sf::Text outputText4;
+
+sf::RectangleShape titlebar1(sf::Vector2f(width - 60, 2));
+sf::RectangleShape titlebar2(sf::Vector2f(width - 65, 2));
+sf::RectangleShape titlebarTop(sf::Vector2f(width, 2));
+sf::RectangleShape borderTop(sf::Vector2f(width, 2));
+sf::RectangleShape borderBottom(sf::Vector2f(width, 2));
+sf::RectangleShape borderLeft(sf::Vector2f(2, height));
+sf::RectangleShape borderRight(sf::Vector2f(2, height));
+sf::RectangleShape backer0(sf::Vector2f(width-80, 50));
+sf::RectangleShape backer1(sf::Vector2f(width-80, 50));
+sf::RectangleShape backer2(sf::Vector2f(width-80, 50));
+sf::RectangleShape backer3(sf::Vector2f(width-80, 50));
+sf::RectangleShape drawerBacker(sf::Vector2f(width,height));
+
+boost::mutex outputMutex1;
+boost::mutex outputMutex2;
+boost::mutex outputMutex3;
+boost::mutex outputMutex4;
+
+bp::child bot1process;
+bp::child bot2process;
+bp::child bot3process;
+bp::child bot4process;
+
+sf::Vector2i mousePos = sf::Mouse::getPosition();
+
+#pragma endregion
 
 int main()
 {
 
+#pragma region ==VARIABLES INIT==
+
 	HWND hWnd = GetConsoleWindow();
 	if (hWnd)
 		ShowWindow(hWnd, SW_HIDE);
-
-#pragma region ==VARIABLES==
 
 	//add colors to vector
 	colors.push_back(sf::Color::White);
@@ -73,8 +128,7 @@ int main()
 	icon.loadFromFile("Icon.png");
 	window.setIcon(icon.getSize().x, icon.getSize().y, icon.getPixelsPtr());
 	font.loadFromFile("resources/monospace.ttf");
-
-	sf::Text title;
+	
 	title.setFont(font);
 	title.setString("VISOR");
 	title.setCharacterSize(24);
@@ -82,37 +136,32 @@ int main()
 	title.setStyle(sf::Text::Italic);
 	title.setPosition(15, height-40);
 
-	sf::Texture lockedIMG;
 	lockedIMG.loadFromFile("resources/locked.png");
-	sf::Sprite lockedSprite;
+	
 	lockedSprite.setPosition(width - 60, 11);
-	sf::Texture unlockedIMG;
+	
 	unlockedIMG.loadFromFile("resources/unlocked.png");
 	lockedSprite.setTexture(unlockedIMG);
 	lockedSprite.setScale(sf::Vector2f(0.75f, 0.75f));
 
-	sf::Text greeterTitle;
 	greeterTitle.setFont(font);
 	greeterTitle.setString(botName1);
 	greeterTitle.setCharacterSize(30);
 	greeterTitle.setFillColor(sf::Color::White);
 	greeterTitle.setPosition(50, 55);
 
-	sf::Text modTitle;
 	modTitle.setFont(font);
 	modTitle.setString(botName2);
 	modTitle.setCharacterSize(30);
 	modTitle.setFillColor(sf::Color::White);
 	modTitle.setPosition(50, 155);
 
-	sf::Text dmTitle;
 	dmTitle.setFont(font);
 	dmTitle.setString(botName3);
 	dmTitle.setCharacterSize(30);
 	dmTitle.setFillColor(sf::Color::White);
 	dmTitle.setPosition(50, 255);
 
-	sf::Text deTitle;
 	deTitle.setFont(font);
 	deTitle.setString(botName4);
 	deTitle.setCharacterSize(30);
@@ -126,23 +175,13 @@ int main()
 	Button de(sf::Vector2f(400, 375), sf::Vector2f(100, 30), sf::Color(0, 0, 0), sf::Color::Red, "OFFLINE", 12, true, true, false);
 	Button titleName(sf::Vector2f(45,height-23),sf::Vector2f(80,30),sf::Color::Black,sf::Color::White,"VISOR",24,true,false, true);
 
-	sf::RectangleShape titlebar1(sf::Vector2f(width - 60, 2));
-	sf::RectangleShape titlebar2(sf::Vector2f(width - 65, 2));
-	sf::RectangleShape titlebarTop(sf::Vector2f(width, 2));
 	titlebar1.setFillColor(color);
 	titlebar2.setFillColor(color);
 	titlebar1.setPosition(93, height - 27);
 	titlebar2.setPosition(90, height - 22);
 	titlebarTop.setFillColor(color);
 	titlebarTop.setPosition(0, height-50);
-	//TODO:: make an offset for the titlebar so it can be moved easily,
-	//TODO:: add titlebarTop here for it so app bar can be made
-
-	sf::RectangleShape borderTop(sf::Vector2f(width, 2));
-	sf::RectangleShape borderBottom(sf::Vector2f(width, 2));
-	sf::RectangleShape borderLeft(sf::Vector2f(2, height));
-	sf::RectangleShape borderRight(sf::Vector2f(2, height));
-
+	
 	borderTop.setFillColor(color);
 	borderBottom.setFillColor(color);
 	borderLeft.setFillColor(color);
@@ -151,11 +190,6 @@ int main()
 	borderBottom.setPosition(0, height - 2);
 	borderLeft.setPosition(0, 0);
 	borderRight.setPosition(width - 2, 0);
-
-	sf::RectangleShape backer0(sf::Vector2f(width-80, 50));
-	sf::RectangleShape backer1(sf::Vector2f(width-80, 50));
-	sf::RectangleShape backer2(sf::Vector2f(width-80, 50));
-	sf::RectangleShape backer3(sf::Vector2f(width-80, 50));
 
 	backer0.setFillColor(sf::Color(20, 20, 20));
 	backer1.setFillColor(sf::Color(20, 20, 20));
@@ -172,50 +206,31 @@ int main()
 	backer2.setOutlineThickness(2);
 	backer3.setOutlineThickness(2);
 
-
 	backer0.setPosition(40, 50);
 	backer1.setPosition(40, 150);
 	backer2.setPosition(40, 250);
 	backer3.setPosition(40, 350);
-
-	boost::mutex outputMutex1;
-	sf::Text outputText1;
 
 	outputText1.setFont(font);
 	outputText1.setCharacterSize(12); // Adjust the size as needed
 	outputText1.setFillColor(sf::Color::Green);
 	outputText1.setPosition(50, 110); // Adjust the position as needed
 
-	boost::mutex outputMutex2;
-	sf::Text outputText2;
-
 	outputText2.setFont(font);
 	outputText2.setCharacterSize(12); // Adjust the size as needed
 	outputText2.setFillColor(sf::Color::Green);
 	outputText2.setPosition(50, 210); // Adjust the position as needed
-
-	boost::mutex outputMutex3;
-	sf::Text outputText3;
 
 	outputText3.setFont(font);
 	outputText3.setCharacterSize(12); // Adjust the size as needed
 	outputText3.setFillColor(sf::Color::Green);
 	outputText3.setPosition(50, 310); // Adjust the position as needed
 
-	boost::mutex outputMutex4;
-	sf::Text outputText4;
-
 	outputText4.setFont(font);
 	outputText4.setCharacterSize(12); // Adjust the size as needed
 	outputText4.setFillColor(sf::Color::Green);
 	outputText4.setPosition(50, 410); // Adjust the position as needed
 
-	bp::child bot1process;
-	bp::child bot2process;
-	bp::child bot3process;
-	bp::child bot4process;
-
-	sf::RectangleShape drawerBacker(sf::Vector2f(width,height));
 	drawerBacker.setFillColor(sf::Color(0,0,0));
 	drawerBacker.setPosition(sf::Vector2f(0, height - 50+offset));
 
@@ -223,10 +238,9 @@ int main()
 
 #pragma endregion
 
-	
-
 	while (window.isOpen())
 	{
+#pragma region ==VARS REFRESH==
 		borderTop.setFillColor(color);
 		borderBottom.setFillColor(color);
 		borderLeft.setFillColor(color);
@@ -248,8 +262,9 @@ int main()
 		titlebarTop.setPosition(0, height - 50 + offset);
 		titleName.set_position(sf::Vector2f(45, height - 23 + offset));
 		drawerBacker.setPosition(sf::Vector2f(0, height - 50 + offset));
+#pragma endregion
 
-		if (drawer)
+		if (drawer) //offset is the position of the drawer handle for the app drawer, not the window offset
 		{
 			if (offset > -450)
 				offset -= 25;
@@ -277,7 +292,7 @@ int main()
 			locked = true;
 		}
 
-		sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+		mousePos = sf::Mouse::getPosition(window);
 		if (ticker > 0)
 			ticker--;
 
@@ -322,7 +337,7 @@ int main()
 					try
 					{
 						bp::ipstream pipe_stream;
-						bot1process = bp::child("cmd /c node app.js", bp::std_out > pipe_stream, bp::std_err > stderr, bp::start_dir("C:/Users/dalto/Desktop/discord_bot"));
+						bot1process = bp::child("cmd /c " + bot1Command, bp::std_out > pipe_stream, bp::std_err > stderr, bp::start_dir(bot1Path));
 
 						std::string line;
 						std::string output;
@@ -368,7 +383,7 @@ int main()
 					try
 					{
 						bp::ipstream pipe_stream2;
-						bot2process = bp::child("cmd /c python moderator.py", bp::std_out > pipe_stream2, bp::std_err > stderr, bp::start_dir("F:/code/bot"));
+						bot2process = bp::child("cmd /c " + bot2Command, bp::std_out > pipe_stream2, bp::std_err > stderr, bp::start_dir(bot2Path));
 						bot2Online = true;
 						mod.text_string = "ONLINE";
 						mod.text_color = sf::Color::Green;
@@ -397,7 +412,7 @@ int main()
 					try
 					{
 						bp::ipstream pipe_stream3;
-						bot3process = bp::child("cmd /c python gatekeeper.py", bp::std_out > pipe_stream3, bp::std_err > stderr, bp::start_dir("F:/code/bot/Gatekeeper"));
+						bot3process = bp::child("cmd /c " + bot3Command, bp::std_out > pipe_stream3, bp::std_err > stderr, bp::start_dir(bot3Path));
 						bot3Online = true;
 						dm.text_string = "ONLINE";
 						dm.text_color = sf::Color::Green;
@@ -426,7 +441,7 @@ int main()
 					try
 					{
 						bp::ipstream pipe_stream4;
-						bot4process = bp::child("cmd /c python danny.py", bp::std_out > pipe_stream4, bp::std_err > stderr, bp::start_dir("F:/code/bot"));
+						bot4process = bp::child("cmd /c " + bot4Command, bp::std_out > pipe_stream4, bp::std_err > stderr, bp::start_dir(bot4Path));
 
 						bot4Online = true;
 						de.text_string = "ONLINE";
@@ -519,8 +534,14 @@ int main()
 			}
 		}
 
-		if (windowheld && !locked && !drawer)
+		if (windowheld && !locked && !drawer) //offset to drag the window, but only under certain conditions
 			window.setPosition(sf::Mouse::getPosition() - sf::Vector2i(window.getSize().x / 2, 25));
+
+
+
+
+
+		// vvv I don't _need_ bot1Online etc, it's vestigial from when I was using a different method to check if the process was running but I'm too lazy to remove it lol
 
 		if (bot1process.running())
 		{
@@ -536,7 +557,6 @@ int main()
 			outputText1.setString("");
 		}
 
-		
 		if (bot2process.running())
 		{
 			bot2Online = true;
@@ -550,8 +570,6 @@ int main()
 			mod.text_color = sf::Color::Red;
 			outputText2.setString("");
 		}
-		
-
 		
 		if (bot3process.running())
 		{
@@ -581,6 +599,8 @@ int main()
 			outputText4.setString("");
 		}
 		
+
+
 
 
 		window.clear(colorB);
@@ -614,7 +634,6 @@ int main()
 		window.draw(outputText3);
 		window.draw(outputText4);
 
-		//window.draw(title);
 		window.draw(drawerBacker);
 		titleName.draw(window);
 		titleName.update(window);
@@ -627,11 +646,8 @@ int main()
 		window.draw(borderLeft);
 		window.draw(borderRight);
 
-		
-
 		window.setFramerateLimit(60);
 		window.display();
 	}
-	//return okay if the program exits properly
     return 0;
 }
