@@ -10,7 +10,9 @@
 #include <iostream>
 #include <boost/process.hpp>
 #include <boost/thread.hpp>
+#include <boost/filesystem.hpp>
 namespace bp = boost::process;
+namespace fs = boost::filesystem;
 using namespace std;
 #pragma endregion
 
@@ -36,6 +38,7 @@ const string bot4Command{ "python danny.py" };
 const int width{ 500 };
 const int height{ 500 };
 
+string appsDirectory = "";
 bool bot1Online = false;
 bool bot2Online = false;
 bool bot3Online = false;
@@ -71,6 +74,8 @@ sf::Text outputText2;
 sf::Text outputText3;
 sf::Text outputText4;
 
+sf::Text testText;
+
 sf::RectangleShape titlebar1(sf::Vector2f(width - 60, 2));
 sf::RectangleShape titlebar2(sf::Vector2f(width - 65, 2));
 sf::RectangleShape titlebarTop(sf::Vector2f(width, 2));
@@ -98,8 +103,31 @@ sf::Vector2i mousePos = sf::Mouse::getPosition();
 
 #pragma endregion
 
+int countApps(const std::string& directoryPath) {
+    int jsonFileCount = 0;
+    fs::path dirPath(directoryPath);
+
+    if (fs::exists(dirPath) && fs::is_directory(dirPath)) {
+        for (fs::directory_iterator it(dirPath); it != fs::directory_iterator(); ++it) {
+            if (fs::is_regular_file(*it) && it->path().extension() == ".json") {
+                jsonFileCount++;
+            }
+        }
+    } else {
+        std::cerr << "Invalid directory path: " << directoryPath << std::endl;
+    }
+
+    return jsonFileCount;
+}
+
+
 int main()
 {
+
+	//appsDirectory is the folder named 'apps' inside the program's directory folder
+	appsDirectory = fs::current_path().string() + "/apps";
+	
+
 
 #pragma region ==VARIABLES INIT==
 
@@ -238,8 +266,18 @@ int main()
 
 #pragma endregion
 
+	testText.setString(std::to_string(countApps(appsDirectory)));
+	testText.setPosition(0, 0);
+	testText.setFillColor(sf::Color::White);
+	testText.setCharacterSize(25);
+	testText.setFont(font);
+
+
+
 	while (window.isOpen())
 	{
+
+
 #pragma region ==VARS REFRESH==
 		borderTop.setFillColor(color);
 		borderBottom.setFillColor(color);
@@ -254,6 +292,12 @@ int main()
 		backer2.setOutlineColor(color);
 		backer3.setOutlineColor(color);
 		exit.text_color = color;
+		exit.outline_color = color;
+		greeter.outline_color = color;
+		mod.outline_color = color;
+		dm.outline_color = color;
+		de.outline_color = color;
+
 		titleName.text_color = color;
 		lockedSprite.setColor(color);
 
@@ -296,6 +340,7 @@ int main()
 		if (ticker > 0)
 			ticker--;
 
+#pragma region ==BUTTON CLICKS==
 		if (exit.clicked && !locked && window.hasFocus())
 		{
 			//close all child processes if they are running
@@ -462,6 +507,7 @@ int main()
 			ticker = 20;
 			drawer = !drawer;
 		}
+#pragma endregion
 
 		while (window.pollEvent(event))
 		{
@@ -479,7 +525,7 @@ int main()
 						{
 							
 						}
-						else if (mousePos.x < 100)
+						else if (mousePos.x < 100) //this is here to disallow clicking in that area
 						{
 
 						}
@@ -508,6 +554,9 @@ int main()
 			//if arrow keys are pressed, change sf::Color color to the next sf::Color in vector of them
 			if (event.type == sf::Event::KeyPressed)
 			{
+				if (event.key.code == sf::Keyboard::Space)
+					countApps(appsDirectory);
+
 				if (event.key.code == sf::Keyboard::Right && !locked)
 				{
 					colorTicker++;
@@ -538,7 +587,7 @@ int main()
 			window.setPosition(sf::Mouse::getPosition() - sf::Vector2i(window.getSize().x / 2, 25));
 
 
-
+		testText.setPosition(sf::Vector2f(width/2+(testText.getGlobalBounds().width/2), 500+offset));
 
 
 		// vvv I don't _need_ bot1Online etc, it's vestigial from when I was using a different method to check if the process was running but I'm too lazy to remove it lol
@@ -605,7 +654,7 @@ int main()
 
 		window.clear(colorB);
 
-		
+#pragma region ==DRAW LOOP==
 		window.draw(backer0);
 		window.draw(backer1);
 		window.draw(backer2);
@@ -645,6 +694,9 @@ int main()
 		window.draw(borderBottom);
 		window.draw(borderLeft);
 		window.draw(borderRight);
+#pragma endregion
+
+		window.draw(testText);
 
 		window.setFramerateLimit(60);
 		window.display();
