@@ -24,7 +24,7 @@ public:
 
 		this->appName.setFont(font);
 		this->appName.setString(appName);
-		this->appName.setCharacterSize(20);
+		this->appName.setCharacterSize(15);
 		this->appName.setFillColor(sf::Color::White);
 
 		// Center the appIcon on 'pos'

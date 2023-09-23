@@ -176,7 +176,6 @@ std::vector<AppInfo> extractAppInfoFromJsonFiles(const std::string& directoryPat
 
 int main()
 {
-	
 	//appsDirectory is the folder named 'apps' inside the program's directory folder
 	appsDirectory = fs::current_path().string() + "/apps";
 	
@@ -320,16 +319,10 @@ int main()
 
 
 #pragma endregion
-
-	testText.setString(std::to_string(countApps(appsDirectory)));
-	testText.setPosition(0, 0);
-	testText.setFillColor(sf::Color::White);
-	testText.setCharacterSize(25);
-	testText.setFont(font);
 	
 	for (int i = 0; i < countApps(appsDirectory); i++) 
 	{
-		float posX = 125 + (i % 3) * 125;
+		float posX = 100 + (i % 3) * 150;
 		float posY = 570 + (i / 3) * 125;
 
 		App app = App(appInfoList[i].appIconPath, appInfoList[i].appName, sf::Vector2f(posX, posY), appInfoList[i].appPath, font);
@@ -647,10 +640,6 @@ int main()
 
 		if (windowheld && !locked && !drawer) //offset to drag the window, but only under certain conditions
 			window.setPosition(sf::Mouse::getPosition() - sf::Vector2i(window.getSize().x / 2, 25));
-
-
-		testText.setPosition(sf::Vector2f(width/2+(testText.getGlobalBounds().width/2), 500+offset));
-
 
 		// vvv I don't _need_ bot1Online etc, it's vestigial from when I was using a different method to check if the process was running but I'm too lazy to remove it lol
 
