@@ -52,7 +52,7 @@ public:
 		window.draw(appName);
 	}
 
-	void update(sf::Vector2f offset, sf::RenderWindow& window, bool isDrawerEvenOpen)
+	void update(sf::Vector2f offset, sf::RenderWindow& window, bool isDrawerEvenOpen, bool canOpenApp)
 	{
 		appRect.setPosition(this->pos.x, pos.y + offset.y);
 		appName.setPosition(this->pos.x, pos.y + offset.y + 60);
@@ -63,7 +63,7 @@ public:
 			appRect.setFillColor(sf::Color(230,230,230));
 			if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
 			{
-				if (isDrawerEvenOpen)
+				if (isDrawerEvenOpen && canOpenApp)
 					clicked();
 			}
 			else

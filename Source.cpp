@@ -98,6 +98,7 @@ bool windowheld = false;
 bool isDragging = false;
 bool locked = false;
 bool drawer = false;
+bool canOpenApp = false;
 
 int colorTicker = 0;
 int colorBTicker = 10;
@@ -402,9 +403,12 @@ int main()
 		{
 			if (offset > -450)
 				offset -= 25;
+			else
+				canOpenApp = true;
 		}
 		else
 		{
+			canOpenApp = false;
 			if (offset < 0)
 				offset += 25;
 		}
@@ -786,7 +790,7 @@ int main()
 		for (int i = 0; i < apps.size(); i++)
 		{
 			apps[i].draw(window);
-			apps[i].update(sf::Vector2f(0,offset), window, drawer);
+			apps[i].update(sf::Vector2f(0,offset), window, drawer, canOpenApp);
 		}
 
 		window.setFramerateLimit(60);
