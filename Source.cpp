@@ -1,5 +1,7 @@
 #pragma region ==INCLUDES==
-#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
+
+// vvvv this line also requires the linker settings in project properties (linker>system) to be set to "windows subsystem" instead of "console subsystem" vvvv
+//#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
 
 #include <SFML/Graphics.hpp>
 #include <SFML/Network.hpp>
@@ -11,6 +13,11 @@
 #include <boost/process.hpp>
 #include <boost/thread.hpp>
 #include <boost/filesystem.hpp>
+#include <fstream>
+#include <nlohmann/json.hpp>
+#include "App.h"
+
+using json = nlohmann::json;
 namespace bp = boost::process;
 namespace fs = boost::filesystem;
 using namespace std;
@@ -35,9 +42,18 @@ const string bot3Command{ "python gatekeeper.py" };
 const string bot4Command{ "python danny.py" };
 
 #pragma region ==VARIABLES==
+
+struct AppInfo 
+{
+    std::string appName;
+    std::string appPath;
+    std::string appIconPath;
+};
+
 const int width{ 500 };
 const int height{ 500 };
 
+sf::Texture textureBuffer;
 string appsDirectory = "";
 bool bot1Online = false;
 bool bot2Online = false;
@@ -120,13 +136,61 @@ int countApps(const std::string& directoryPath) {
     return jsonFileCount;
 }
 
+void loadTexture(const std::string& path, vector<sf::Texture>& textureVector, sf::Texture textureBuffer) 
+{
+	textureBuffer.loadFromFile("resources/Icon.png");
+	textureVector.push_back(textureBuffer);
+}
+
+std::vector<AppInfo> extractAppInfoFromJsonFiles(const std::string& directoryPath) {
+    std::vector<AppInfo> appInfoList;
+
+    fs::path dirPath(directoryPath);
+
+    if (fs::exists(dirPath) && fs::is_directory(dirPath)) {
+        for (fs::directory_iterator it(dirPath); it != fs::directory_iterator(); ++it) {
+            if (fs::is_regular_file(*it) && it->path().extension() == ".json") {
+                std::ifstream jsonFile(it->path().string());
+                if (jsonFile) {
+                    json jsonData;
+                    jsonFile >> jsonData;
+
+                    // Assuming the JSON structure has fields 'appName', 'appPath', and 'appIconPath'
+                    if (jsonData.contains("appName") && jsonData.contains("appPath") && jsonData.contains("appIconPath")) {
+                        AppInfo appInfo;
+                        appInfo.appName = jsonData["appName"];
+                        appInfo.appPath = jsonData["appPath"];
+                        appInfo.appIconPath = jsonData["appIconPath"];
+                        appInfoList.push_back(appInfo);
+                    } else {
+                        std::cerr << "JSON file does not contain all required fields: " << it->path().string() << std::endl;
+                    }
+
+                    jsonFile.close();
+                } else {
+                    std::cerr << "Failed to open JSON file: " << it->path().string() << std::endl;
+                }
+            }
+        }
+    } else {
+        std::cerr << "Invalid directory path: " << directoryPath << std::endl;
+    }
+
+    return appInfoList;
+}
 
 int main()
 {
-
+	textureBuffer = sf::Texture();
+	textureBuffer.loadFromFile("assets/locked.png");
 	//appsDirectory is the folder named 'apps' inside the program's directory folder
 	appsDirectory = fs::current_path().string() + "/apps";
 	
+	std::vector<AppInfo> appInfoList = extractAppInfoFromJsonFiles(appsDirectory);
+	std::vector<App> apps;
+	std::vector<sf::Texture> appIcons;
+	std::vector<string> appNames;
+	std::vector<string> appPaths;
 
 
 #pragma region ==VARIABLES INIT==
@@ -272,7 +336,20 @@ int main()
 	testText.setCharacterSize(25);
 	testText.setFont(font);
 
+	/*for (const AppInfo& appInfo : appInfoList) 
+	{
+        std::cout << "App Name: " << appInfo.appName << std::endl;
+        std::cout << "App Path: " << appInfo.appPath << std::endl;
+        std::cout << "App Icon Path: " << appInfo.appIconPath << std::endl;
+    }*/
 
+	
+	for (int i = 0; i < countApps(appsDirectory); i++) 
+	{
+		App app = App(appInfoList[i].appIconPath, appInfoList[i].appName, sf::Vector2f(225,500), appInfoList[i].appPath, font);
+		apps.push_back(app);
+	}
+	
 
 	while (window.isOpen())
 	{
@@ -697,6 +774,11 @@ int main()
 #pragma endregion
 
 		window.draw(testText);
+		for (int i = 0; i < apps.size(); i++)
+		{
+			apps[i].draw(window);
+			apps[i].update(sf::Vector2f(0,offset));
+		}
 
 		window.setFramerateLimit(60);
 		window.display();
