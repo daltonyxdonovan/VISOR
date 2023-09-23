@@ -136,13 +136,8 @@ int countApps(const std::string& directoryPath) {
     return jsonFileCount;
 }
 
-void loadTexture(const std::string& path, vector<sf::Texture>& textureVector, sf::Texture textureBuffer) 
+std::vector<AppInfo> extractAppInfoFromJsonFiles(const std::string& directoryPath) 
 {
-	textureBuffer.loadFromFile("resources/Icon.png");
-	textureVector.push_back(textureBuffer);
-}
-
-std::vector<AppInfo> extractAppInfoFromJsonFiles(const std::string& directoryPath) {
     std::vector<AppInfo> appInfoList;
 
     fs::path dirPath(directoryPath);
@@ -181,16 +176,12 @@ std::vector<AppInfo> extractAppInfoFromJsonFiles(const std::string& directoryPat
 
 int main()
 {
-	textureBuffer = sf::Texture();
-	textureBuffer.loadFromFile("assets/locked.png");
+	
 	//appsDirectory is the folder named 'apps' inside the program's directory folder
 	appsDirectory = fs::current_path().string() + "/apps";
 	
 	std::vector<AppInfo> appInfoList = extractAppInfoFromJsonFiles(appsDirectory);
 	std::vector<App> apps;
-	std::vector<sf::Texture> appIcons;
-	std::vector<string> appNames;
-	std::vector<string> appPaths;
 
 
 #pragma region ==VARIABLES INIT==
@@ -335,26 +326,20 @@ int main()
 	testText.setFillColor(sf::Color::White);
 	testText.setCharacterSize(25);
 	testText.setFont(font);
-
-	/*for (const AppInfo& appInfo : appInfoList) 
-	{
-        std::cout << "App Name: " << appInfo.appName << std::endl;
-        std::cout << "App Path: " << appInfo.appPath << std::endl;
-        std::cout << "App Icon Path: " << appInfo.appIconPath << std::endl;
-    }*/
-
 	
 	for (int i = 0; i < countApps(appsDirectory); i++) 
 	{
-		App app = App(appInfoList[i].appIconPath, appInfoList[i].appName, sf::Vector2f(225,500), appInfoList[i].appPath, font);
+		float posX = 125 + (i % 3) * 125;
+		float posY = 570 + (i / 3) * 125;
+
+		App app = App(appInfoList[i].appIconPath, appInfoList[i].appName, sf::Vector2f(posX, posY), appInfoList[i].appPath, font);
+
 		apps.push_back(app);
 	}
-	
+
 
 	while (window.isOpen())
 	{
-
-
 #pragma region ==VARS REFRESH==
 		borderTop.setFillColor(color);
 		borderBottom.setFillColor(color);
@@ -773,7 +758,7 @@ int main()
 		window.draw(borderRight);
 #pragma endregion
 
-		window.draw(testText);
+		//window.draw(testText);
 		for (int i = 0; i < apps.size(); i++)
 		{
 			apps[i].draw(window);
