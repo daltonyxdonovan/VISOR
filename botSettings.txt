@@ -1,0 +1,53 @@
+//THIS TXT FILE CONTAINS THE VARIABLES TO RUN BOTS/PROGRAMS ON THE VISOR'S MAIN PAGE. SLOT 1 IS MAINLY FOR A DISCORD.JS BOT.
+//!!!!!!! DO NOT ALTER WHITESPACE OR ANYTHING IN THIS TXT, JUST THE VARS!!!!!!! it will break
+
+// SLOT 1 //
+//NAME
+GR33T-R
+
+//PATH
+C:/Users/dalto/Desktop/discord_bot
+
+//COMMAND TO RUN
+node app.js
+
+
+
+
+// SLOT 2 //
+//NAME
+MODERATOR
+
+//PATH
+F:/code/bot
+
+//COMMAND TO RUN
+python moderator.py
+
+
+
+
+
+// SLOT 3 //
+//NAME
+DUNGEONMASTER
+
+//PATH
+F:/code/bot/Gatekeeper
+
+//COMMAND TO RUN
+python gatekeeper.py
+
+
+
+
+
+// SLOT 4 //
+//NAME
+DUNGEONEER
+
+//PATH
+F:/code/bot
+
+//COMMAND TO RUN
+python danny.py

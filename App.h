@@ -41,12 +41,6 @@ public:
 		this->appPath = appPath;
 	}
 
-
-	void loadTexture()
-	{
-	
-	}
-
 	void draw(sf::RenderWindow& window)
 	{
 		//if appRect's texture is not the same as the appIconTex, set it to appIconTex
@@ -58,15 +52,31 @@ public:
 		window.draw(appName);
 	}
 
-	void update(sf::Vector2f offset)
+	void update(sf::Vector2f offset, sf::RenderWindow& window, bool isDrawerEvenOpen)
 	{
 		appRect.setPosition(this->pos.x, pos.y + offset.y);
 		appName.setPosition(this->pos.x, pos.y + offset.y + 60);
+
+		sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+		if (appRect.getGlobalBounds().contains(mousePos.x, mousePos.y))
+		{
+			appRect.setFillColor(sf::Color(230,230,230));
+			if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+			{
+				if (isDrawerEvenOpen)
+					clicked();
+			}
+			else
+				appRect.setFillColor(sf::Color::White);
+		}
 	}
 
 	void clicked()
 	{
-		system(appPath.c_str());
+		// Enclose the appPath in double quotes
+		string command = "\"" + appPath + "\"";
+		system(command.c_str());
 	}
+
 };
 

@@ -16,12 +16,16 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include "App.h"
+#include "BotSettingFile.h"
 
 using json = nlohmann::json;
 namespace bp = boost::process;
 namespace fs = boost::filesystem;
 using namespace std;
 #pragma endregion
+
+BotSettings settings;
+BotSettingFile botSettingFile(settings);
 
 // vvv NAME OF THE BOT TO DISPLAY ON THE VISOR vvv
 const string botName1{ "GR33T-R" };
@@ -40,6 +44,37 @@ const string bot1Command{ "node app.js" };
 const string bot2Command{ "python moderator.py" };
 const string bot3Command{ "python gatekeeper.py" };
 const string bot4Command{ "python danny.py" };
+
+#pragma region ==botSettingsLoader==
+/* here for when i get the bot settings file working
+
+
+// vvv Here we create an instance of the BotSettings struct and pass it to the BotSettingFile class, then pull our user facing vars out vvv
+BotSettings settings;
+BotSettingFile botSettingFile(settings);
+
+// vvv NAME OF THE BOT TO DISPLAY ON THE VISOR vvv
+const string botName1{ settings.botName1 };
+const string botName2{ settings.botName2 };
+const string botName3{ settings.botName3 };
+const string botName4{ settings.botName4 };
+
+// vvv LOCATION OF THE BOT SCRIPT TO RUN, WITHOUT THE SCRIPT ITSELF (the parent folder) vvv
+const string bot1Path{ settings.botPath1 };
+const string bot2Path{ settings.botPath2 };
+const string bot3Path{ settings.botPath3 };
+const string bot4Path{ settings.botPath4 };
+
+// vvv COMMAND TO RUN THE BOT SCRIPT vvv
+const string bot1Command{ settings.botCommand1 };
+const string bot2Command{ settings.botCommand2 };
+const string bot3Command{ settings.botCommand3 };
+const string bot4Command{ settings.botCommand4 };
+
+
+
+*/
+#pragma endregion
 
 #pragma region ==VARIABLES==
 
@@ -751,7 +786,7 @@ int main()
 		for (int i = 0; i < apps.size(); i++)
 		{
 			apps[i].draw(window);
-			apps[i].update(sf::Vector2f(0,offset));
+			apps[i].update(sf::Vector2f(0,offset), window, drawer);
 		}
 
 		window.setFramerateLimit(60);
